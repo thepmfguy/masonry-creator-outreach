@@ -206,6 +206,18 @@ page = f"""<!doctype html>
 </html>
 """
 
+# Emails must only ever reach the page base64-encoded. A stray address written into a
+# hook or body would be published in the clear, which is the one thing the masking exists
+# to prevent. Fail the build rather than ship it.
+import re
+
+leaked = {
+    m for m in re.findall(r"[\w.+-]+@[\w-]+\.[\w.-]+", page)
+    if not m.endswith("masonry.so")
+}
+if leaked:
+    raise SystemExit(f"refusing to write index.html: plaintext email(s) in page: {sorted(leaked)}")
+
 (HERE / "index.html").write_text(page)
 print(f"wrote index.html: {len(data['creators'])} creators, {sent} already contacted\n")
 print("Deep links for sheet column O:")
