@@ -106,7 +106,6 @@ document.addEventListener('click',function(e){
 
 
 def card(c):
-    b64 = base64.b64encode(c["email"].encode()).decode()
     cid = c["handle"].replace(".", "-")
     anchor = f"c-{cid}"
     badge = (
@@ -114,6 +113,19 @@ def card(c):
         if c["contacted"]
         else '<span class="badge">Not yet contacted</span>'
     )
+
+    if not c.get("email"):
+        return f"""
+    <article class="card" id="{anchor}" data-handle="{html.escape(c['handle'])}">
+      <div class="top">
+        <div class="handle"><a href="{html.escape(c['instagram'])}" target="_blank" rel="noopener noreferrer">@{html.escape(c['handle'])}</a></div>
+        <div class="badges"><span class="badge sent">No email</span></div>
+      </div>
+      <div class="meta">Sheet row {c['row']} &middot; {c['median_views']:,} median Instagram views &middot; keyword &ldquo;{html.escape(c['keyword'])}&rdquo;</div>
+      <p class="hook">{html.escape(c['hook'])}</p>
+    </article>"""
+
+    b64 = base64.b64encode(c["email"].encode()).decode()
     return f"""
     <article class="card" id="{anchor}" data-handle="{html.escape(c['handle'])}">
       <div class="top">
@@ -153,6 +165,7 @@ def card(c):
 
 
 sent = sum(1 for c in data["creators"] if c["contacted"])
+with_email = sum(1 for c in data["creators"] if c.get("email"))
 cards = "".join(card(c) for c in data["creators"])
 
 page = f"""<!doctype html>
